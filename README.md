@@ -44,19 +44,25 @@ Before running the project, make sure you have:
 Clone the repository:
 
 ```bash
-git clone https://github.com/anubhav7723/stellarPay.git
+git clone https://github.com/your-username/stellarpay.git
 ```
 
-Move into the project folder:
+Move into the project directory:
 
 ```bash
 cd stellarpay
 ```
 
-Install dependencies:
+Install all dependencies:
 
 ```bash
 npm install
+```
+
+The project uses the following main packages:
+
+```bash
+npm install @stellar/stellar-sdk @stellar/freighter-api
 ```
 
 Start the development server:
