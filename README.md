@@ -8,7 +8,7 @@ contract** logs every payment and tracks its status (`Pending` →
 
 ---
 
-## Features (Yellow Belt)
+## Features
 
 - **Multi-wallet support** via [StellarWalletsKit](https://github.com/Creit-Tech/Stellar-Wallets-Kit) — Freighter, xBull, Albedo, Hana
 - **3 handled error types**: wallet not found/installed, user rejected signing, insufficient balance (see `src/services/errors.js`)
@@ -85,7 +85,7 @@ StellarWalletsKit modal.
 
 ---
 
-## Building & Deploying the Contract (optional — already deployed)
+## Building & Deploying the Contract
 
 If you want to build and deploy the contract yourself instead of using the
 address in "Deployment Info" below:
@@ -180,8 +180,6 @@ cargo test
 
 ## Deployment Info
 
-> Fill these in after you deploy — required for submission.
-
 - **Deployed contract address:** `CBFG55XRLD2V4UMPUL2HOLPVCFHZQ7QOQSUCRCHY5ACHE6OO775IBTPH`
 - **Sample transaction hash (contract call):** `8601cc6133f6c5bd6155e6fa497245febd4cdfd76e235c40f024d454ed54c198`
   - Verify at: `https://stellar.expert/explorer/testnet/tx/8601cc6133f6c5bd6155e6fa497245febd4cdfd76e235c40f024d454ed54c198`
@@ -190,7 +188,7 @@ cargo test
 
 ## Screenshots
 
-### Wallet options (StellarWalletsKit modal)
+### Wallet options (StellarPay)
 
 ![Wallet options](/screenshots/wallet-options.png)
 
@@ -201,15 +199,6 @@ cargo test
 ### Live on-chain payment history
 
 ![Live on-chain payment history](/screenshots/payment-history.png)
-
----
-
-## Future Improvements
-
-- Streaming events via `getEvents` instead of polling
-- Address book / saved recipients
-- CSV import for bulk payment tracking
-- Pagination for payment history
 
 ---
 
