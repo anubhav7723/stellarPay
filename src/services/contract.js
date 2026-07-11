@@ -93,7 +93,7 @@ async function readContract(method, args) {
   const contract = new Contract(CONTRACT_ID);
   // Any syntactically valid account works for a read-only simulation.
   const dummyAccount = new Account(
-    "GAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWHF",
+    "GAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWHF",
     "0"
   );
   const tx = new TransactionBuilder(dummyAccount, {
