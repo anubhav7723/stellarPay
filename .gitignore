@@ -9,6 +9,13 @@ __pycache__/
 node_modules/
 .env
 
+# ==========================================
+# Rust / Soroban
+# ==========================================
+target/
+.soroban/
+*.wasm
+
 # Virtual Environment
 venv/
 env/
