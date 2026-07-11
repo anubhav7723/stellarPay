@@ -5,79 +5,85 @@ import {
   Operation,
   Asset,
   BASE_FEE,
-  Transaction,
 } from "@stellar/stellar-sdk";
 
-import {
-  isConnected,
-  requestAccess,
-  getAddress,
-  signTransaction,
-} from "@stellar/freighter-api";
+import { kit, openWalletModal, signWithKit } from "./walletKit";
+import { classifyError, InsufficientBalanceError } from "./errors";
 
 const server = new Horizon.Server("https://horizon-testnet.stellar.org");
 
+// Minimum XLM every account must keep as its base reserve (testnet default).
+const MIN_RESERVE = 1;
+
+/**
+ * Opens the StellarWalletsKit modal so the user can pick Freighter, xBull,
+ * Albedo, Hana, etc. Returns { id, name, address }.
+ */
 export async function connectWallet() {
-  const connected = await isConnected();
-
-  if (!connected.isConnected) {
-    throw new Error("Freighter Wallet is not installed.");
+  try {
+    return await openWalletModal();
+  } catch (err) {
+    throw classifyError(err);
   }
-
-  await requestAccess();
-
-  const address = await getAddress();
-
-  return address.address;
 }
 
 export async function getBalance(publicKey) {
   try {
     const account = await server.loadAccount(publicKey);
-
     const nativeBalance = account.balances.find(
       (asset) => asset.asset_type === "native"
     );
-
-    return nativeBalance.balance;
+    return nativeBalance ? nativeBalance.balance : "0";
   } catch (err) {
     console.error(err);
     return "0";
   }
 }
 
-export async function sendPayment(destination, amount) {
+/**
+ * Sends a single classic XLM payment, signed via the wallet the user
+ * selected through StellarWalletsKit.
+ */
+export async function sendPayment(sourceAddress, destination, amount) {
   try {
-    const { address } = await getAddress();
+    // --- Error type 1 check happens implicitly: if no wallet was ever
+    // connected, sourceAddress is empty and callers should guard for it.
 
-    const sourceAccount = await server.loadAccount(address);
+    const sourceAccount = await server.loadAccount(sourceAddress);
 
-    const transaction = new TransactionBuilder(
-      sourceAccount,
-      {
-        fee: BASE_FEE,
-        networkPassphrase: Networks.TESTNET,
-      }
-    )
+    const nativeBalance = sourceAccount.balances.find(
+      (b) => b.asset_type === "native"
+    );
+    const available = parseFloat(nativeBalance?.balance || "0") - MIN_RESERVE;
+
+    // --- Error type 2: insufficient balance, checked proactively so the
+    // user gets a clear message instead of a cryptic Horizon rejection.
+    if (Number(amount) > available) {
+      throw new InsufficientBalanceError(
+        `You need ${amount} XLM but only ${available.toFixed(2)} XLM is available (after the 1 XLM reserve).`
+      );
+    }
+
+    const transaction = new TransactionBuilder(sourceAccount, {
+      fee: BASE_FEE,
+      networkPassphrase: Networks.TESTNET,
+    })
       .addOperation(
         Operation.payment({
           destination,
           asset: Asset.native(),
-          amount,
+          amount: String(amount),
         })
       )
       .setTimeout(30)
       .build();
 
-    const signed = await signTransaction(
-      transaction.toXDR(),
-      {
-        networkPassphrase: Networks.TESTNET,
-        address,
-      }
-    );
+    // --- Error type 3: the user rejects the signing prompt in their
+    // wallet extension. signWithKit / classifyError surfaces this as
+    // UserRejectedError.
+    const signed = await signWithKit(transaction.toXDR(), sourceAddress);
     if (signed.error) {
-      throw new Error(signed.error.message);
+      throw new Error(signed.error.message || "Signing failed");
     }
 
     const signedTx = TransactionBuilder.fromXDR(
@@ -85,13 +91,11 @@ export async function sendPayment(destination, amount) {
       Networks.TESTNET
     );
 
-    const response = await server.submitTransaction(
-      signedTx
-    );
-
+    const response = await server.submitTransaction(signedTx);
     return response;
-
   } catch (err) {
-    throw err;
+    throw classifyError(err);
   }
 }
+
+export { kit };

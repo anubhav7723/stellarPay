@@ -1,6 +1,7 @@
 import WalletCard from "./components/WalletCard";
 import BalanceCard from "./components/BalanceCard";
-import SendPayment from "./components/SendPayment";
+import MultiPayment from "./components/MultiPayment";
+import PaymentList from "./components/PaymentList";
 import StatusCard from "./components/StatusCard";
 
 function App() {
@@ -15,16 +16,18 @@ function App() {
         </h1>
 
         <p className="text-center text-gray-400 mt-2">
-          Send XLM on Stellar Testnet
+          Multi-address payment tracker on Stellar Testnet
         </p>
 
         <WalletCard />
 
         <BalanceCard />
 
-        <SendPayment />
+        <MultiPayment />
 
         <StatusCard />
+
+        <PaymentList />
 
       </div>
 
