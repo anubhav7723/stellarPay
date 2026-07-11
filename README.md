@@ -181,8 +181,8 @@ cargo test
 ## Deployment Info
 
 - **Deployed contract address:** `CBFG55XRLD2V4UMPUL2HOLPVCFHZQ7QOQSUCRCHY5ACHE6OO775IBTPH`
-- **Sample transaction hash (contract call):** `8601cc6133f6c5bd6155e6fa497245febd4cdfd76e235c40f024d454ed54c198`
-  - Verify at: `https://stellar.expert/explorer/testnet/tx/8601cc6133f6c5bd6155e6fa497245febd4cdfd76e235c40f024d454ed54c198`
+- **Sample transaction hash (contract call):** `de3727add3e4789ccd7713cc1af3e1d5135f91e906cc955c3c6aaabfac264c16`
+  - Verify at: `https://stellar.expert/explorer/testnet/tx/de3727add3e4789ccd7713cc1af3e1d5135f91e906cc955c3c6aaabfac264c16`
 
 ---
 
