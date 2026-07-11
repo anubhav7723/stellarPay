@@ -5,9 +5,6 @@ multiple addresses through a choice of wallets, while a **Soroban smart
 contract** logs every payment and tracks its status (`Pending` →
 `Completed` / `Failed`) in real time.
 
-Built for the **Stellar Journey to Mastery** challenge.
-- 🟢 White Belt (Level 1): single-wallet XLM payments — see `git tag white-belt`
-- 🟡 Yellow Belt (Level 2): multi-wallet, deployed contract, event-driven status tracking — **this submission**
 
 ---
 
@@ -185,10 +182,9 @@ cargo test
 
 > Fill these in after you deploy — required for submission.
 
-- **Deployed contract address:** `TODO_PASTE_CONTRACT_ID_HERE`
-- **Sample transaction hash (contract call):** `TODO_PASTE_TX_HASH_HERE`
-  - Verify at: `https://stellar.expert/explorer/testnet/tx/TODO_PASTE_TX_HASH_HERE`
-- **Live demo:** _(optional)_ `TODO_DEPLOY_URL`
+- **Deployed contract address:** `CBFG55XRLD2V4UMPUL2HOLPVCFHZQ7QOQSUCRCHY5ACHE6OO775IBTPH`
+- **Sample transaction hash (contract call):** `8601cc6133f6c5bd6155e6fa497245febd4cdfd76e235c40f024d454ed54c198`
+  - Verify at: `https://stellar.expert/explorer/testnet/tx/8601cc6133f6c5bd6155e6fa497245febd4cdfd76e235c40f024d454ed54c198`
 
 ---
 
@@ -196,15 +192,15 @@ cargo test
 
 ### Wallet options (StellarWalletsKit modal)
 
-`TODO: screenshots/wallet-options.png`
+![Wallet options](/screenshots/wallet-options.png)
 
 ### Multi-address payment tracker
 
-`TODO: screenshots/payment-tracker.png`
+![Multi-address payment tracker](/screenshots/payment-tracker.png)
 
 ### Live on-chain payment history
 
-`TODO: screenshots/payment-history.png`
+![Live on-chain payment history](/screenshots/payment-history.png)
 
 ---
 
