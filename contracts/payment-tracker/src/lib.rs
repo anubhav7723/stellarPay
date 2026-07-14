@@ -106,6 +106,43 @@ impl PaymentTracker {
         env.events().publish((PAYMENT_UPD, payment.sender.clone()), id);
     }
 
+    /// Transfer tokens directly on-chain and record a completed payment.
+    /// Requires sender authorization. Returns new payment id.
+    pub fn send_payment(
+        env: Env,
+        token: Address,
+        sender: Address,
+        recipient: Address,
+        amount: i128,
+        memo: String,
+    ) -> u32 {
+        sender.require_auth();
+
+        // Direct inter-contract call to the token contract's transfer function
+        let token_client = soroban_sdk::token::Client::new(&env, &token);
+        token_client.transfer(&sender, &recipient, &amount);
+
+        let mut count: u32 = env.storage().instance().get(&DataKey::Count).unwrap_or(0);
+        count += 1;
+
+        let payment = Payment {
+            id: count,
+            sender: sender.clone(),
+            recipient,
+            amount,
+            memo,
+            status: PaymentStatus::Completed,
+            timestamp: env.ledger().timestamp(),
+        };
+
+        env.storage().persistent().set(&DataKey::Payment(count), &payment);
+        env.storage().instance().set(&DataKey::Count, &count);
+
+        env.events().publish((PAYMENT_NEW, sender), count);
+
+        count
+    }
+
     /// Read a single payment record.
     pub fn get_payment(env: Env, id: u32) -> Payment {
         env.storage()
