@@ -4,7 +4,7 @@ A production-ready React dApp built on the **Stellar Testnet** using the **Neo-B
 
 ---
 
-## 🚀 Level 3 Orange Belt Features
+##  Features of StellarPay
 
 In addition to core multi-wallet integrations and audit logging, StellarPay implements production-ready architecture:
 
@@ -27,7 +27,7 @@ In addition to core multi-wallet integrations and audit logging, StellarPay impl
 
 ---
 
-## 🛠️ Tech Stack
+##  Tech Stack
 
 - React + Vite + Tailwind CSS (Vanilla CSS bindings in `src/index.css`)
 - `@stellar/stellar-sdk` (Classic Horizon + Soroban RPC execution)
@@ -36,7 +36,7 @@ In addition to core multi-wallet integrations and audit logging, StellarPay impl
 
 ---
 
-## 📁 Project Structure
+##  Project Structure
 
 ```
 .github/
@@ -69,7 +69,7 @@ src/
 
 ---
 
-## 💻 Setup & Run
+## Setup & Run
 
 ### 1. Clone & Install
 ```bash
@@ -91,7 +91,7 @@ npm run dev
 
 ---
 
-## 🧪 Testing the Smart Contract
+## Testing the Smart Contract
 
 The contract includes **4 automated unit tests** (with zero warnings) verifying:
 1. Basic on-chain audit recording (`record_payment`).
@@ -107,7 +107,7 @@ cargo test
 
 ---
 
-## 📦 Building & Deploying the Smart Contract
+## Building & Deploying the Smart Contract
 
 To rebuild and redeploy the contract to Testnet:
 
@@ -126,7 +126,7 @@ To rebuild and redeploy the contract to Testnet:
 
 ---
 
-## 🔒 Error Handling Matrix
+##  Error Handling Matrix
 
 We proactively check and classify three core Web3 failure modes:
 
@@ -138,14 +138,13 @@ We proactively check and classify three core Web3 failure modes:
 
 ---
 
-## 🌐 Deployment Details
+##  Deployment Details
 
 - **Deployed Contract ID**: `CBFG55XRLD2V4UMPUL2HOLPVCFHZQ7QOQSUCRCHY5ACHE6OO775IBTPH`
 - **Audit interaction hash**: `de3727add3e4789ccd7713cc1af3e1d5135f91e906cc955c3c6aaabfac264c16`
 
 ---
 
-## 📸 Presentation
+##  Presentation
 
 - **Author**: Anubhav
-- **Belt Achievement**: Level 3 Orange Belt
