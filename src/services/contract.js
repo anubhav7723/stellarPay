@@ -88,6 +88,23 @@ export async function updateStatus(sourceAddress, id, completed) {
   }
 }
 
+/** Route payment directly through the smart contract via on-chain token transfer. */
+export async function sendPaymentDirect(sourceAddress, tokenAddress, recipient, amountStroops, memo) {
+  try {
+    const args = [
+      new Address(tokenAddress).toScVal(),
+      new Address(sourceAddress).toScVal(),
+      new Address(recipient).toScVal(),
+      nativeToScVal(BigInt(amountStroops), { type: "i128" }),
+      nativeToScVal(memo, { type: "string" }),
+    ];
+    const result = await submitInvocation("send_payment", args, sourceAddress);
+    return { ...result, paymentId: scValToNative(result.returnValue) };
+  } catch (err) {
+    throw classifyError(err);
+  }
+}
+
 /** Read-only simulate call, no signature/fee required. */
 async function readContract(method, args) {
   const contract = new Contract(CONTRACT_ID);

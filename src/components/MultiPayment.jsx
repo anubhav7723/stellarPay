@@ -1,7 +1,8 @@
-import { useState } from "react";
-import { sendPayment } from "../services/stellar";
-import { recordPayment, updateStatus } from "../services/contract";
+import { useState, useEffect } from "react";
+import { sendPayment, getBalances } from "../services/stellar";
+import { recordPayment, updateStatus, sendPaymentDirect } from "../services/contract";
 import { useWallet } from "../context/WalletContext";
+import { getAddressAvatar } from "../utils/avatar";
 
 const STROOPS_PER_XLM = 10_000_000;
 
@@ -9,41 +10,18 @@ function emptyRow() {
   return { key: crypto.randomUUID(), recipient: "", amount: "", status: "idle" };
 }
 
-// Generate unique avatar background and initials from address string
-export function getAddressAvatar(address) {
-  if (!address || address.length < 5) {
-    return {
-      initials: "??",
-      gradient: "linear-gradient(135deg, #cbd5e1 0%, #94a3b8 100%)", // muted slate gray
-    };
-  }
-
-  let hash = 0;
-  for (let i = 0; i < address.length; i++) {
-    hash = (hash << 5) - hash + address.charCodeAt(i);
-    hash |= 0;
-  }
-  const index = Math.abs(hash);
-
-  const presets = [
-    "linear-gradient(135deg, #f97316 0%, #ea580c 100%)", // orange
-    "linear-gradient(135deg, #a855f7 0%, #7e22ce 100%)", // purple
-    "linear-gradient(135deg, #06b6d4 0%, #0891b2 100%)", // cyan
-    "linear-gradient(135deg, #10b981 0%, #047857 100%)", // emerald
-    "linear-gradient(135deg, #ec4899 0%, #be185d 100%)", // pink
-    "linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)", // blue
-    "linear-gradient(135deg, #eab308 0%, #ca8a04 100%)", // yellow
-    "linear-gradient(135deg, #ef4444 0%, #b91c1c 100%)", // red
-  ];
-
-  const gradient = presets[index % presets.length];
-  const initials = address.slice(0, 1) + address.slice(4, 5).toUpperCase();
-  return { initials, gradient };
-}
 
 function MultiPayment() {
   const [rows, setRows] = useState([emptyRow()]);
   const [sending, setSending] = useState(false);
+  
+  // Custom Level 3 States
+  const [routingMethod, setRoutingMethod] = useState("direct"); // "direct" | "classic"
+  const [availableTokens, setAvailableTokens] = useState([{ code: "XLM", contractId: "CAS3J7GYCCKCRSS7Z3G3DYSUG3DHLBI2CDIGEO7Z4SHE6G46DQTU6R66", balance: "0" }]);
+  const [selectedTokenIndex, setSelectedTokenIndex] = useState(0);
+  const [customTokenContract, setCustomTokenContract] = useState("");
+  const [contacts, setContacts] = useState([]);
+  const [showContactPicker, setShowContactPicker] = useState(null); // Row key
 
   const {
     walletAddress,
@@ -53,6 +31,29 @@ function MultiPayment() {
     setRefreshBalance,
     setLastError,
   } = useWallet();
+
+  // Load contacts and wallet token trustlines
+  useEffect(() => {
+    // 1. Load contacts
+    const savedContacts = localStorage.getItem("stellarpay_contacts");
+    if (savedContacts) {
+      try {
+        setContacts(JSON.parse(savedContacts));
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    // 2. Load trustlines for token selector
+    async function loadWalletTokens() {
+      if (!walletAddress) return;
+      const balances = await getBalances(walletAddress);
+      if (balances && balances.length > 0) {
+        setAvailableTokens(balances);
+      }
+    }
+    loadWalletTokens();
+  }, [walletAddress, refreshBalance]);
 
   function updateRow(key, field, value) {
     setRows((prev) => prev.map((r) => (r.key === key ? { ...r, [field]: value } : r)));
@@ -74,6 +75,12 @@ function MultiPayment() {
     setRows((prev) => prev.map((r) => (r.key === key ? { ...r, ...patch } : r)));
   }
 
+  // Auto-fill address from contacts
+  const handleSelectContact = (rowKey, contactAddress) => {
+    updateRow(rowKey, "recipient", contactAddress);
+    setShowContactPicker(null);
+  };
+
   async function handleSendAll() {
     if (!walletAddress) {
       alert("Please connect your wallet first.");
@@ -89,31 +96,64 @@ function MultiPayment() {
     setSending(true);
     setLastError(null);
 
+    // Resolve token address for direct routing
+    const currentToken = availableTokens[selectedTokenIndex] || {};
+    const tokenContractId = currentToken.code === "XLM" 
+      ? currentToken.contractId 
+      : (customTokenContract || currentToken.contractId);
+
+    if (routingMethod === "direct" && !tokenContractId) {
+      alert("Please specify a valid Token Contract ID for the custom asset.");
+      setSending(false);
+      return;
+    }
+
     for (const row of valid) {
       let paymentId = null;
       try {
-        setRowState(row.key, { status: "recording" });
+        if (routingMethod === "direct") {
+          // Direct On-Chain Contract routing
+          setRowState(row.key, { status: "sending" });
+          setTransactionStatus(`Direct routing ${row.amount} ${currentToken.code || "XLM"} directly via contract...`);
+          setTransactionHash("");
 
-        const amountStroops = Math.round(Number(row.amount) * STROOPS_PER_XLM);
-        const recorded = await recordPayment(
-          walletAddress,
-          row.recipient.trim(),
-          amountStroops,
-          `Payment to ${row.recipient.slice(0, 6)}`
-        );
-        paymentId = recorded.paymentId;
+          const amountStroops = Math.round(Number(row.amount) * STROOPS_PER_XLM);
+          const result = await sendPaymentDirect(
+            walletAddress,
+            tokenContractId,
+            row.recipient.trim(),
+            amountStroops,
+            `Direct ${currentToken.code || "XLM"} Contract route`
+          );
 
-        setRowState(row.key, { status: "sending" });
-        setTransactionStatus(`Sending payment to ${row.recipient.slice(0, 8)}...`);
-        setTransactionHash("");
+          setRowState(row.key, { status: "completed" });
+          setTransactionStatus("✅ Direct Payment Sent Successfully");
+          setTransactionHash(result.hash);
+        } else {
+          // Classic logging path (Level 2)
+          setRowState(row.key, { status: "recording" });
 
-        const response = await sendPayment(walletAddress, row.recipient.trim(), row.amount);
+          const amountStroops = Math.round(Number(row.amount) * STROOPS_PER_XLM);
+          const recorded = await recordPayment(
+            walletAddress,
+            row.recipient.trim(),
+            amountStroops,
+            `Payment to ${row.recipient.slice(0, 6)}`
+          );
+          paymentId = recorded.paymentId;
 
-        await updateStatus(walletAddress, paymentId, true);
+          setRowState(row.key, { status: "sending" });
+          setTransactionStatus(`Sending payment to ${row.recipient.slice(0, 8)}...`);
+          setTransactionHash("");
 
-        setRowState(row.key, { status: "completed" });
-        setTransactionStatus("✅ Payment Sent Successfully");
-        setTransactionHash(response.hash);
+          const response = await sendPayment(walletAddress, row.recipient.trim(), row.amount);
+
+          await updateStatus(walletAddress, paymentId, true);
+
+          setRowState(row.key, { status: "completed" });
+          setTransactionStatus("✅ Payment Sent Successfully");
+          setTransactionHash(response.hash);
+        }
         setRefreshBalance(!refreshBalance);
       } catch (err) {
         console.error(err);
@@ -121,7 +161,7 @@ function MultiPayment() {
         setRowState(row.key, { status: "failed" });
         setTransactionStatus(`❌ ${err.name || "Transaction Failed"}: ${err.message}`);
 
-        if (paymentId) {
+        if (paymentId && routingMethod === "classic") {
           try {
             await updateStatus(walletAddress, paymentId, false);
           } catch (innerErr) {
@@ -134,8 +174,81 @@ function MultiPayment() {
     setSending(false);
   }
 
+  const currentToken = availableTokens[selectedTokenIndex] || {};
+
   return (
     <div className="space-y-6">
+      
+      {/* Route Method and Asset Selection Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-5 p-4 border-2 border-dashed border-[var(--border-color)] bg-[var(--bg-app)]/30 rounded-xl mb-4">
+        
+        {/* Routing Selector */}
+        <div>
+          <label className="block text-xs uppercase tracking-wider font-extrabold text-[var(--text-secondary)] mb-2">
+            Routing Mechanism
+          </label>
+          <div className="flex border-2 border-[var(--border-color)] rounded-lg p-1 bg-[var(--bg-card)]">
+            <button
+              onClick={() => setRoutingMethod("direct")}
+              className={`flex-1 py-2 text-xs font-bold uppercase rounded cursor-pointer ${
+                routingMethod === "direct"
+                  ? "bg-[var(--accent-secondary)] text-white"
+                  : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+              }`}
+            >
+              Direct routing
+            </button>
+            <button
+              onClick={() => setRoutingMethod("classic")}
+              className={`flex-1 py-2 text-xs font-bold uppercase rounded cursor-pointer ${
+                routingMethod === "classic"
+                  ? "bg-[var(--accent-color)] text-[#1a1a1a]"
+                  : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+              }`}
+            >
+              Audit Logging
+            </button>
+          </div>
+        </div>
+
+        {/* Token Selector */}
+        {routingMethod === "direct" && (
+          <div>
+            <label className="block text-xs uppercase tracking-wider font-extrabold text-[var(--text-secondary)] mb-2">
+              Select Token Asset
+            </label>
+            <select
+              value={selectedTokenIndex}
+              onChange={(e) => setSelectedTokenIndex(Number(e.target.value))}
+              className="w-full p-2.5 border-2 border-[var(--border-color)] bg-[var(--bg-card)] text-sm rounded-lg font-bold outline-none text-[var(--text-primary)] cursor-pointer"
+            >
+              {availableTokens.map((t, idx) => (
+                <option key={idx} value={idx}>
+                  {t.code} (Bal: {parseFloat(t.balance).toFixed(2)})
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+      </div>
+
+      {/* Custom Token Contract input */}
+      {routingMethod === "direct" && currentToken.code !== "XLM" && (
+        <div className="p-4 border-2 border-[var(--border-color)] bg-[var(--bg-card)] rounded-xl shadow-[3px_3px_0px_0px_var(--border-color)]">
+          <label className="block text-xs uppercase tracking-wider font-extrabold text-[var(--text-secondary)] mb-2">
+            Stellar Asset Contract Address
+          </label>
+          <input
+            type="text"
+            placeholder="e.g. C..."
+            value={customTokenContract || currentToken.contractId || ""}
+            onChange={(e) => setCustomTokenContract(e.target.value)}
+            className="w-full p-3 rounded-lg brutalist-input outline-none text-sm font-mono font-semibold"
+          />
+        </div>
+      )}
+
+      {/* Recipient Form List */}
       <div className="space-y-5">
         {rows.map((row, index) => {
           const avatar = getRowAvatar(row.recipient);
@@ -148,15 +261,47 @@ function MultiPayment() {
                 <span className="text-xs font-mono font-bold text-[var(--accent-secondary)] uppercase tracking-wider">
                   // Recipient #{index + 1}
                 </span>
-                {rows.length > 1 && (
-                  <button
-                    onClick={() => removeRow(row.key)}
-                    className="px-2.5 py-1 border-2 border-[var(--border-color)] bg-red-500 text-white rounded text-[10px] uppercase font-syne font-bold tracking-wider cursor-pointer hover:translate-x-[-1px] hover:translate-y-[-1px] hover:shadow-[2px_2px_0px_0px_var(--border-color)] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none transition-all"
-                  >
-                    Remove
-                  </button>
-                )}
+                <div className="flex gap-2">
+                  {/* Contacts Autocomplete trigger */}
+                  {contacts.length > 0 && (
+                    <button
+                      onClick={() => setShowContactPicker(showContactPicker === row.key ? null : row.key)}
+                      className="px-2.5 py-1 border-2 border-[var(--border-color)] bg-[var(--bg-tab-bar)] rounded text-[10px] uppercase font-syne font-bold tracking-wider cursor-pointer hover:translate-x-[-1px] hover:translate-y-[-1px] hover:shadow-[2px_2px_0px_0px_var(--border-color)] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none transition-all text-[var(--text-primary)]"
+                    >
+                      Contacts
+                    </button>
+                  )}
+                  {rows.length > 1 && (
+                    <button
+                      onClick={() => removeRow(row.key)}
+                      className="px-2.5 py-1 border-2 border-[var(--border-color)] bg-red-500 text-white rounded text-[10px] uppercase font-syne font-bold tracking-wider cursor-pointer hover:translate-x-[-1px] hover:translate-y-[-1px] hover:shadow-[2px_2px_0px_0px_var(--border-color)] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none transition-all"
+                    >
+                      Remove
+                    </button>
+                  )}
+                </div>
               </div>
+
+              {/* Contact Picker List Dropdown */}
+              {showContactPicker === row.key && (
+                <div className="border-2 border-[var(--border-color)] bg-[var(--bg-app)] p-3 rounded-lg mb-4 shadow-[2px_2px_0px_0px_var(--border-color)] max-h-[150px] overflow-y-auto space-y-1.5 z-20 relative">
+                  <span className="text-[10px] uppercase font-bold text-[var(--text-secondary)] block mb-1">
+                    Select Contact:
+                  </span>
+                  {contacts.map((c) => (
+                    <div
+                      key={c.id}
+                      onClick={() => handleSelectContact(row.key, c.address)}
+                      className="p-2 border border-[var(--border-color)] bg-[var(--bg-card)] rounded hover:bg-[var(--accent-color)]/20 cursor-pointer font-bold text-xs flex justify-between items-center transition-all"
+                    >
+                      <span>{c.name}</span>
+                      <span className="font-mono text-[10px] text-[var(--text-secondary)]">
+                        {c.address.slice(0, 6)}...{c.address.slice(-4)}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
 
               <div className="grid grid-cols-1 gap-5">
                 {/* Recipient Input with Dynamic Avatar */}
@@ -185,7 +330,7 @@ function MultiPayment() {
 
                 <div>
                   <label className="block text-xs uppercase tracking-wider font-extrabold text-[var(--text-secondary)] mb-2">
-                    Amount (XLM)
+                    Amount ({currentToken.code || "XLM"})
                   </label>
                   <input
                     type="number"
@@ -250,7 +395,7 @@ function StatusBadge({ status }) {
   const map = {
     idle: ["Ready", "bg-slate-100 border-[var(--border-color)] text-slate-800 shadow-[1px_1px_0px_0px_var(--border-color)]"],
     recording: ["Recording on-chain...", "bg-amber-100 border-[var(--border-color)] text-amber-800 shadow-[1px_1px_0px_0px_var(--border-color)] animate-pulse"],
-    sending: ["Sending XLM...", "bg-sky-100 border-[var(--border-color)] text-sky-800 shadow-[1px_1px_0px_0px_var(--border-color)] animate-pulse"],
+    sending: ["Sending Transfer...", "bg-sky-100 border-[var(--border-color)] text-sky-800 shadow-[1px_1px_0px_0px_var(--border-color)] animate-pulse"],
     completed: ["Completed", "bg-emerald-100 border-[var(--border-color)] text-emerald-800 shadow-[1px_1px_0px_0px_var(--border-color)]"],
     failed: ["Failed", "bg-rose-100 border-[var(--border-color)] text-rose-800 shadow-[1px_1px_0px_0px_var(--border-color)]"],
   };

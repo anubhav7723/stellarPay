@@ -4,13 +4,14 @@ import BalanceCard from "./components/BalanceCard";
 import MultiPayment from "./components/MultiPayment";
 import PaymentList from "./components/PaymentList";
 import StatusCard from "./components/StatusCard";
+import AddressBook from "./components/AddressBook";
 import { CONTRACT_ID } from "./services/contract";
 
 function App() {
   const [theme, setTheme] = useState(() => {
     return localStorage.getItem("theme") || "light";
   });
-  const [activeTab, setActiveTab] = useState("send"); // "send" | "history" | "wallet"
+  const [activeTab, setActiveTab] = useState("send"); // "send" | "history" | "wallet" | "addressbook"
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
@@ -85,7 +86,7 @@ function App() {
       </header>
 
       {/* Tabs Navigation (Outlined pills with solid offset highlight) */}
-      <nav className="w-full max-w-4xl mb-8 z-10">
+      <nav className="w-full max-w-4xl mb-8 z-10 overflow-x-auto whitespace-nowrap">
         <div className="flex bg-[var(--bg-tab-bar)] p-1.5 border-2.5 border-[var(--border-color)] rounded-xl w-fit shadow-[4px_4px_0px_0px_var(--border-color)]">
           <button
             onClick={() => setActiveTab("send")}
@@ -108,6 +109,16 @@ function App() {
             Ledger History
           </button>
           <button
+            onClick={() => setActiveTab("addressbook")}
+            className={`px-5 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all cursor-pointer ${
+              activeTab === "addressbook"
+                ? "bg-[var(--accent-color)] text-[#1a1a1a] border-2 border-[var(--border-color)] shadow-[2px_2px_0px_0px_var(--border-color)]"
+                : "text-[var(--text-primary)] hover:bg-[var(--bg-card)]/40"
+            }`}
+          >
+            Address Book
+          </button>
+          <button
             onClick={() => setActiveTab("wallet")}
             className={`px-5 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all cursor-pointer ${
               activeTab === "wallet"
@@ -127,7 +138,7 @@ function App() {
             <div className="mb-6 pb-4 border-b-2 border-dashed border-[var(--border-color)]">
               <h2 className="text-2xl font-bold uppercase tracking-tight">Send New Payment</h2>
               <p className="text-sm text-[var(--text-secondary)] mt-1.5">
-                Lock and broadcast XLM transactions on the Soroban smart contract payment tracker.
+                Lock and broadcast tokens on the Soroban smart contract payment router.
               </p>
             </div>
             <MultiPayment />
@@ -143,6 +154,18 @@ function App() {
               </p>
             </div>
             <PaymentList />
+          </div>
+        )}
+
+        {activeTab === "addressbook" && (
+          <div>
+            <div className="mb-6 pb-4 border-b-2 border-dashed border-[var(--border-color)]">
+              <h2 className="text-2xl font-bold uppercase tracking-tight">Address Book</h2>
+              <p className="text-sm text-[var(--text-secondary)] mt-1.5">
+                Save contact aliases for Stellar public keys to make batch sending and transaction history human-readable.
+              </p>
+            </div>
+            <AddressBook />
           </div>
         )}
 

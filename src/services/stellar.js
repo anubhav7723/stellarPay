@@ -40,6 +40,34 @@ export async function getBalance(publicKey) {
   }
 }
 
+export async function getBalances(publicKey) {
+  try {
+    const account = await server.loadAccount(publicKey);
+    return account.balances.map((b) => {
+      if (b.asset_type === "native") {
+        return {
+          code: "XLM",
+          balance: b.balance,
+          asset_type: b.asset_type,
+          contractId: "CAS3J7GYCCKCRSS7Z3G3DYSUG3DHLBI2CDIGEO7Z4SHE6G46DQTU6R66", // Native SAC on testnet
+        };
+      }
+      return {
+        code: b.asset_code,
+        issuer: b.asset_issuer,
+        balance: b.balance,
+        asset_type: b.asset_type,
+        // Custom assets can be wrapped to SAC via Stellar SDK Asset class:
+        // Asset.contractId(Networks.TESTNET)
+      };
+    });
+  } catch (err) {
+    console.error("Failed to load balances:", err);
+    return [];
+  }
+}
+
+
 /**
  * Sends a single classic XLM payment, signed via the wallet the user
  * selected through StellarWalletsKit.

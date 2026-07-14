@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { getRecentPayments } from "../services/contract";
 import { CONTRACT_ID } from "../services/contract";
-import { getAddressAvatar } from "./MultiPayment";
+import { getAddressAvatar } from "../utils/avatar";
 
 const POLL_INTERVAL_MS = 5000;
 
@@ -13,6 +13,19 @@ function PaymentList() {
   const [payments, setPayments] = useState([]);
   const [error, setError] = useState(null);
   const [copiedId, setCopiedId] = useState(null);
+  const [contacts, setContacts] = useState([]);
+
+  // Load contacts for alias lookup
+  useEffect(() => {
+    const saved = localStorage.getItem("stellarpay_contacts");
+    if (saved) {
+      try {
+        setContacts(JSON.parse(saved));
+      } catch (e) {
+        console.error(e);
+      }
+    }
+  }, []);
 
   useEffect(() => {
     if (!CONTRACT_ID) return;
@@ -96,6 +109,10 @@ function PaymentList() {
           {payments.map((p) => {
             const status = p.status?.tag || p.status || "Pending";
             const avatar = getAddressAvatar(p.recipient);
+            
+            // Check if recipient address is saved in contacts
+            const contact = contacts.find((c) => c.address === p.recipient);
+
             return (
               <div
                 key={p.id}
@@ -112,9 +129,21 @@ function PaymentList() {
                   </div>
                   <div>
                     <div className="flex items-center gap-2">
-                      <span className="font-mono text-xs font-bold text-[var(--text-primary)]">
-                        {p.recipient.slice(0, 8)}...{p.recipient.slice(-6)}
-                      </span>
+                      {contact ? (
+                        <div className="flex items-baseline gap-1.5">
+                          <span className="font-syne text-xs font-extrabold text-[var(--accent-secondary)]">
+                            {contact.name}
+                          </span>
+                          <span className="font-mono text-[9px] text-[var(--text-secondary)]">
+                            ({p.recipient.slice(0, 5)}...{p.recipient.slice(-4)})
+                          </span>
+                        </div>
+                      ) : (
+                        <span className="font-mono text-xs font-bold text-[var(--text-primary)]">
+                          {p.recipient.slice(0, 8)}...{p.recipient.slice(-6)}
+                        </span>
+                      )}
+                      
                       <button
                         onClick={() => handleCopyAddress(p.recipient, p.id)}
                         className="p-1 border border-[var(--border-color)] bg-[var(--input-bg)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] rounded transition-all cursor-pointer active:translate-x-[1px] active:translate-y-[1px] active:shadow-none shadow-[1.5px_1.5px_0px_0px_var(--border-color)]"

@@ -1,20 +1,27 @@
 import { useEffect, useState } from "react";
 import { useWallet } from "../context/WalletContext";
-import { getBalance } from "../services/stellar";
+import { getBalance, getBalances } from "../services/stellar";
 
 function BalanceCard() {
   const { walletAddress, refreshBalance } = useWallet();
   const [balance, setBalance] = useState("0");
+  const [balances, setBalances] = useState([]);
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     async function fetchBalance() {
       if (!walletAddress) {
         setBalance("0");
+        setBalances([]);
         return;
       }
+      // Fetch primary XLM balance
       const bal = await getBalance(walletAddress);
       setBalance(bal);
+
+      // Scan all trustlines / portfolio balances
+      const allBalances = await getBalances(walletAddress);
+      setBalances(allBalances);
     }
     fetchBalance();
   }, [walletAddress, refreshBalance]);
@@ -72,6 +79,30 @@ function BalanceCard() {
           <span>{balance}</span>
           <span className="text-sm uppercase tracking-widest font-bold text-[var(--accent-color)]">XLM</span>
         </h2>
+
+        {/* Custom Trustlines Portfolio Section */}
+        {walletAddress && balances.filter((b) => b.code !== "XLM").length > 0 && (
+          <div className="mt-6 pt-4 border-t-2 border-dashed border-[var(--border-color)]">
+            <span className="text-xs uppercase font-mono font-bold text-[var(--accent-secondary)] tracking-wider block mb-3">
+              // Custom Trustlines Detected
+            </span>
+            <div className="space-y-2">
+              {balances
+                .filter((b) => b.code !== "XLM")
+                .map((b, i) => (
+                  <div
+                    key={i}
+                    className="flex justify-between items-center bg-[var(--input-bg)] px-3.5 py-2.5 border-2 border-[var(--border-color)] rounded-lg shadow-[2px_2px_0px_0px_var(--border-color)] font-mono"
+                  >
+                    <span className="text-xs font-bold text-[var(--text-primary)]">{b.code}</span>
+                    <span className="text-xs font-bold text-[var(--text-secondary)]">
+                      {parseFloat(b.balance).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </span>
+                  </div>
+                ))}
+            </div>
+          </div>
+        )}
 
         {/* Dashboard Stats Widget Grid */}
         <div className="mt-6 grid grid-cols-3 gap-3">
