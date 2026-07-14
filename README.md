@@ -140,17 +140,15 @@ We proactively check and classify three core Web3 failure modes:
 
 ## Submission Links & Deployment Details
 
-- **Live Demo Link**: [Deploy on Vercel / Netlify](https://your-live-demo-link.vercel.app) *(Replace with your live URL)*
-- **Demo Video Link**: [Watch the 1-2 minute Demo Video](https://your-youtube-or-loom-link.com) *(Replace with your demo video URL)*
-- **Contract Deployment Address**: `CBFG55XRLD2V4UMPUL2HOLPVCFHZQ7QOQSUCRCHY5ACHE6OO775IBTPH`
-- **Transaction Hash**: `de3727add3e4789ccd7713cc1af3e1d5135f91e906cc955c3c6aaabfac264c16`
-- **Verification Link**: [View on Stellar.expert Testnet Explorer](https://stellar.expert/explorer/testnet/tx/de3727add3e4789ccd7713cc1af3e1d5135f91e906cc955c3c6aaabfac264c16)
+- **Live Demo Link**: https://stellar-pay-eta.vercel.app/
+- **Demo Video Link**: https://drive.google.com/file/d/1puaQpjntfx4VLMLdsYvdTIIJJfNCwaNm/view?usp=drive_link
+- **Contract Deployment Address**: `CARG6UIZAAILITUTW37GRELC6TKGMPQV4TLSHKIABVM7BLLW6JBLQV4O`
+- **Transaction Hash**: `2739de1d2b008f66d6538544bae964406a7b5bcac36d6bebf946deedc5063013`
+- **Verification Link**: [View on Stellar.expert Testnet Explorer](https://stellar.expert/explorer/testnet/tx/2739de1d2b008f66d6538544bae964406a7b5bcac36d6bebf946deedc5063013)
 
 ---
 
 ## Verification & Presentation Screenshots
-
-*(Add your verification screenshots below. Remember to push these image files to your repository's `/screenshots` folder!)*
 
 ### 1. Mobile Responsive UI Layout
 ![Mobile Responsive UI Layout](/screenshots/mobile-responsive-ui.png)
