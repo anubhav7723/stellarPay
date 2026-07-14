@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { getRecentPayments } from "../services/contract";
 import { CONTRACT_ID } from "../services/contract";
 import { getAddressAvatar } from "../utils/avatar";
+import { useWallet } from "../context/WalletContext";
 
 const POLL_INTERVAL_MS = 5000;
 
@@ -10,6 +11,7 @@ function formatXLM(stroops) {
 }
 
 function PaymentList() {
+  const { walletAddress, refreshBalance } = useWallet();
   const [payments, setPayments] = useState([]);
   const [error, setError] = useState(null);
   const [copiedId, setCopiedId] = useState(null);
@@ -28,15 +30,22 @@ function PaymentList() {
   }, []);
 
   useEffect(() => {
-    if (!CONTRACT_ID) return;
+    if (!CONTRACT_ID || !walletAddress) {
+      setPayments([]);
+      return;
+    }
 
     let cancelled = false;
 
     async function poll() {
       try {
-        const recent = await getRecentPayments(10);
+        // Fetch a larger sample (e.g. 50 entries) and filter for user's own payments
+        const recent = await getRecentPayments(50);
         if (!cancelled) {
-          setPayments(recent);
+          const userPayments = recent
+            .filter((p) => p.sender === walletAddress)
+            .slice(0, 10);
+          setPayments(userPayments);
           setError(null);
         }
       } catch (err) {
@@ -50,7 +59,7 @@ function PaymentList() {
       cancelled = true;
       clearInterval(interval);
     };
-  }, []);
+  }, [walletAddress, refreshBalance]);
 
   const handleCopyAddress = (addr, id) => {
     navigator.clipboard.writeText(addr);
@@ -73,11 +82,25 @@ function PaymentList() {
     );
   }
 
+  if (!walletAddress) {
+    return (
+      <div className="text-center py-12 text-[var(--text-secondary)] border-2 border-dashed border-[var(--border-color)] bg-[var(--bg-app)]/30 rounded-xl">
+        <svg className="w-8 h-8 mx-auto mb-2 opacity-50 text-[var(--text-secondary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+        </svg>
+        <p className="text-xs uppercase tracking-wider font-bold mb-1">Wallet Not Connected</p>
+        <p className="text-[10px] uppercase font-bold text-[var(--text-secondary)] max-w-xs mx-auto">
+          Please connect your Stellar wallet using the button in the header to view your transaction ledger history.
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center pb-2 border-b-2 border-dashed border-[var(--border-color)]">
         <span className="text-xs font-mono font-bold uppercase tracking-wider text-[var(--text-secondary)]">
-          // Live ledger ({payments.length} items)
+          // Your live ledger ({payments.length} items)
         </span>
         <span className="inline-flex items-center gap-1.5 text-xs font-mono font-bold text-[var(--accent-secondary)]">
           <span className="relative flex h-1.5 w-1.5">
@@ -102,7 +125,7 @@ function PaymentList() {
           <svg className="w-8 h-8 mx-auto mb-2 opacity-55 text-[var(--text-secondary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5">
             <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
           </svg>
-          <p className="text-xs uppercase tracking-wider font-bold">No payments recorded yet.</p>
+          <p className="text-xs uppercase tracking-wider font-bold">No payments recorded yet for this wallet.</p>
         </div>
       ) : (
         <div className="space-y-4">

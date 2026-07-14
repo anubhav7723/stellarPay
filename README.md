@@ -138,13 +138,35 @@ We proactively check and classify three core Web3 failure modes:
 
 ---
 
-##  Deployment Details
+## Submission Links & Deployment Details
 
-- **Deployed Contract ID**: `CBFG55XRLD2V4UMPUL2HOLPVCFHZQ7QOQSUCRCHY5ACHE6OO775IBTPH`
-- **Audit interaction hash**: `de3727add3e4789ccd7713cc1af3e1d5135f91e906cc955c3c6aaabfac264c16`
+- **Live Demo Link**: [Deploy on Vercel / Netlify](https://your-live-demo-link.vercel.app) *(Replace with your live URL)*
+- **Demo Video Link**: [Watch the 1-2 minute Demo Video](https://your-youtube-or-loom-link.com) *(Replace with your demo video URL)*
+- **Contract Deployment Address**: `CBFG55XRLD2V4UMPUL2HOLPVCFHZQ7QOQSUCRCHY5ACHE6OO775IBTPH`
+- **Transaction Hash**: `de3727add3e4789ccd7713cc1af3e1d5135f91e906cc955c3c6aaabfac264c16`
+- **Verification Link**: [View on Stellar.expert Testnet Explorer](https://stellar.expert/explorer/testnet/tx/de3727add3e4789ccd7713cc1af3e1d5135f91e906cc955c3c6aaabfac264c16)
 
 ---
 
-##  Presentation
+## Verification & Presentation Screenshots
+
+*(Add your verification screenshots below. Remember to push these image files to your repository's `/screenshots` folder!)*
+
+### 1. Mobile Responsive UI Layout
+![Mobile Responsive UI Layout](/screenshots/mobile-responsive-ui.png)
+
+### 2. CI/CD Pipeline Running Successfully in GitHub Actions
+![CI/CD Pipeline Running Successfully](/screenshots/cicd-pipeline.png)
+
+### 3. Contract Tests Passing (4 Passed)
+![Contract Tests Passing](/screenshots/contract-tests.png)
+
+### 4. Frontend Unit Tests Passing (3 Passed)
+![Frontend Tests Passing](/screenshots/frontend-tests.png)
+
+---
+
+## 🧑‍💻 Author
 
 - **Author**: Anubhav
+
