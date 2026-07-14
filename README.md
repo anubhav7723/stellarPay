@@ -1,154 +1,105 @@
-# ⭐ StellarPay — Payment Tracker
+# ⭐ StellarPay — Neo-Brutalist Cyberpunk dApp
 
-A React dApp built on the **Stellar Testnet** that lets users send payments to
-multiple addresses through a choice of wallets, while a **Soroban smart
-contract** logs every payment and tracks its status (`Pending` →
-`Completed` / `Failed`) in real time.
-
+A production-ready React dApp built on the **Stellar Testnet** using the **Neo-Brutalist Cyberpunk** design language. StellarPay allows users to batch-transfer XLM and custom token assets, route payments on-chain via inter-contract calls to the Stellar Asset Contract (SAC), manage a local address book, and inspect live blockchain logs.
 
 ---
 
-## Features
+## 🚀 Level 3 Orange Belt Features
 
-- **Multi-wallet support** via [StellarWalletsKit](https://github.com/Creit-Tech/Stellar-Wallets-Kit) — Freighter, xBull, Albedo, Hana
-- **3 handled error types**: wallet not found/installed, user rejected signing, insufficient balance (see `src/services/errors.js`)
-- **Soroban smart contract** (`contracts/payment-tracker`) deployed to Testnet, logging payments on-chain
-- **Contract read + write** from the frontend (`src/services/contract.js`): `record_payment`, `update_status`, `get_payment`, `get_payment_count`
-- **Real-time synchronization**: the payment history table polls the contract every 5s and updates automatically as statuses change
-- **Multi-address sending**: add any number of recipient rows and send them in one batch, each tracked independently
-- **Transaction status visibility**: per-row status badges (Pending/Completed/Failed) + a global status card with the Stellar Explorer-verifiable tx hash
+In addition to core multi-wallet integrations and audit logging, StellarPay implements production-ready architecture:
+
+1. **Advanced Smart Contract Routing (Inter-Contract SAC Calls)**:
+   - Supports routing payments directly through the `send_payment` contract function.
+   - The contract uses inter-contract communication, instantiating `soroban_sdk::token::Client` to invoke `transfer` on a specified token contract (e.g., Native XLM or custom SAC tokens) directly on-chain.
+2. **Stellar Asset Trustline Scanner**:
+   - Automatically queries the Horizon RPC for the user's active trustlines.
+   - Displays a dynamic token asset list (XLM, USDC, EURC, etc.) and their balances.
+   - Lets users choose which token they wish to send via a dropdown in the payment form, dynamically resolving the contract address.
+3. **Local Address Book (Contacts Manager)**:
+   - A built-in local contact book that persists aliases (e.g. `"Alice's Wallet"`) to `localStorage`.
+   - Autocompletes recipient address input fields with a click.
+   - Automatically resolves public keys to names (e.g. `"Alice"`) in the transaction history ledger.
+4. **TACTILE UI (Neo-Brutalist Cyberpunk Style)**:
+   - Headings styled with **Unbounded**, body text with **Space Grotesk**, and technical keys with **JetBrains Mono**.
+   - Solid blocky shadows (`box-shadow: 4px 4px 0px #1a1a1a`), physical border lines (`border-2.5`), and active button states that simulate a mechanical click depression.
+5. **CI/CD Pipeline Configuration**:
+   - Continuous Integration workflow configured in `.github/workflows/ci.yml` that builds and runs Rust contract unit tests (`cargo test`) and compiles the React application (`npm run build`) on every commit.
 
 ---
 
-## Tech Stack
+## 🛠️ Tech Stack
 
-- React + Vite + Tailwind CSS
-- `@stellar/stellar-sdk` (classic payments + Soroban RPC calls)
-- `@creit.tech/stellar-wallets-kit` (multi-wallet)
-- Soroban smart contract in Rust (`soroban-sdk`)
+- React + Vite + Tailwind CSS (Vanilla CSS bindings in `src/index.css`)
+- `@stellar/stellar-sdk` (Classic Horizon + Soroban RPC execution)
+- `@creit.tech/stellar-wallets-kit` (Freighter, xBull, Albedo, Hana)
+- Rust Smart Contract (`soroban-sdk` v22.0.0)
 
 ---
 
-## Project Structure
+## 📁 Project Structure
 
 ```
+.github/
+  workflows/
+    ci.yml                # GitHub Actions CI/CD Pipeline
 contracts/
   payment-tracker/        # Soroban smart contract (Rust)
-    src/lib.rs
-    src/test.rs
+    src/lib.rs            # contains record_payment and send_payment (SAC inter-contract)
+    src/test.rs           # contains 4 unit tests (including mock SAC tests)
 src/
   components/
-    WalletCard.jsx         # multi-wallet connect/disconnect
-    BalanceCard.jsx
-    MultiPayment.jsx        # multi-address send form + contract write calls
-    PaymentList.jsx          # live on-chain payment history (polls contract)
-    StatusCard.jsx
-  context/
-    WalletContext.jsx
+    WalletCard.jsx        # Compact wallet connector header
+    BalanceCard.jsx       # Multi-token trustline scanner portfolio
+    MultiPayment.jsx      # Batch send form (supports direct routing & autocomplete)
+    PaymentList.jsx       # Live transaction history ledger (resolves contact names)
+    AddressBook.jsx       # Add/edit/delete local contact book
+    StatusCard.jsx        # Network monitor alerts
   services/
-    walletKit.js            # StellarWalletsKit setup
-    stellar.js               # classic XLM payments + balance
-    contract.js               # Soroban contract read/write calls
-    errors.js                  # 3 required error types + classifier
+    stellar.js            # Horizon ledger queries + getBalances trustline fetches
+    contract.js           # contract writes: recordPayment, updateStatus, sendPaymentDirect
 ```
 
 ---
 
-## Prerequisites
+## ⚙️ Prerequisites
 
-- Node.js 18+
-- One of: [Freighter](https://www.freighter.app/), [xBull](https://xbull.app/), [Albedo](https://albedo.link/), or [Hana](https://hanawallet.io/) wallet extension
-- Wallet set to **Testnet** and funded via [Stellar Testnet Friendbot](https://laboratory.stellar.org/#account-creator?network=test)
-- Rust + Soroban tooling (only needed if you want to rebuild/redeploy the contract yourself — see below)
+- Node.js 20+
+- Rust toolchain (`stable` channel, target `wasm32-unknown-unknown`)
+- A Stellar wallet (e.g. [Freighter](https://www.freighter.app/)) set to **Testnet** and funded via [Stellar Friendbot](https://laboratory.stellar.org/#account-creator?network=test).
 
 ---
 
-## Frontend Setup
+## 💻 Setup & Run
 
+### 1. Clone & Install
 ```bash
 git clone https://github.com/your-username/stellarPay.git
 cd stellarPay
 npm install
-cp .env.example .env
 ```
 
-Open `.env` and set `VITE_CONTRACT_ID` to the deployed contract address
-(see below, or use the one already deployed for this submission — listed
-in "Deployment Info").
+### 2. Configure Environment
+Create a `.env` file in the root directory:
+```env
+VITE_CONTRACT_ID=CBFG55XRLD2V4UMPUL2HOLPVCFHZQ7QOQSUCRCHY5ACHE6OO775IBTPH
+```
 
+### 3. Start Development Server
 ```bash
 npm run dev
 ```
 
-Open the app, click **Connect Wallet**, and pick a wallet from the
-StellarWalletsKit modal.
-
 ---
 
-## Building & Deploying the Contract
+## 🧪 Testing the Smart Contract
 
-If you want to build and deploy the contract yourself instead of using the
-address in "Deployment Info" below:
+The contract includes **4 automated unit tests** (with zero warnings) verifying:
+1. Basic on-chain audit recording (`record_payment`).
+2. Status updating from pending to completed (`update_status`).
+3. Payment ID increments.
+4. **Inter-contract token transfer** simulation using a mock Stellar Asset Contract (SAC) in the test environment.
 
-### 1. Install Rust and the wasm target
-
-```bash
-curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
-source "$HOME/.cargo/env"
-rustup target add wasm32v1-none
-```
-
-### 2. Install the Stellar CLI
-
-```bash
-cargo install --locked stellar-cli --features opt
-```
-
-(or `brew install stellar-cli` on macOS)
-
-### 3. Create/fund a deployer identity on Testnet
-
-```bash
-stellar keys generate deployer --network testnet --fund
-stellar keys address deployer
-```
-
-### 4. Build the contract
-
-```bash
-stellar contract build
-```
-
-This produces `target/wasm32v1-none/release/payment_tracker.wasm`.
-
-### 5. Deploy to Testnet
-
-```bash
-stellar contract deploy \
-  --wasm target/wasm32v1-none/release/payment_tracker.wasm \
-  --source deployer \
-  --network testnet
-```
-
-This prints the deployed **contract address** (starts with `C...`). Put it
-in `.env` as `VITE_CONTRACT_ID`.
-
-### 6. (optional) Try it from the CLI
-
-```bash
-stellar contract invoke \
-  --id <CONTRACT_ID> \
-  --source deployer \
-  --network testnet \
-  -- record_payment \
-  --sender <deployer-address> \
-  --recipient <any-testnet-address> \
-  --amount 1000000 \
-  --memo "test payment"
-```
-
-### 7. Run tests
-
+Run the tests:
 ```bash
 cd contracts/payment-tracker
 cargo test
@@ -156,54 +107,45 @@ cargo test
 
 ---
 
-## How Status Tracking Works
+## 📦 Building & Deploying the Smart Contract
 
-1. User fills in one or more recipient/amount rows and clicks **Send All Payments**.
-2. For each row, the frontend calls the contract's `record_payment` — this writes a `Pending` record on-chain and emits a `pay_new` event.
-3. The frontend submits the actual classic XLM payment operation, signed by whichever wallet was chosen through StellarWalletsKit.
-4. Once the classic payment confirms, the frontend calls `update_status` to flip the record to `Completed` (or `Failed`, with the failure reason surfaced via one of the 3 error types).
-5. `PaymentList.jsx` independently polls `get_payment_count` / `get_payment` every 5 seconds and re-renders — so the table reflects the current on-chain state even if you refresh the page or another tab records a payment.
+To rebuild and redeploy the contract to Testnet:
 
----
-
-## Error Handling
-
-`src/services/errors.js` defines and classifies 3 error types surfaced throughout the UI:
-
-| Error | Trigger |
-|---|---|
-| `WalletNotFoundError` | No compatible wallet extension is installed |
-| `UserRejectedError` | User declines the sign request in their wallet |
-| `InsufficientBalanceError` | Amount + reserve exceeds available XLM balance (checked proactively before submission, and also caught from Horizon's `op_underfunded`) |
+1. **Build the WASM binary**:
+   ```bash
+   stellar contract build
+   ```
+2. **Deploy WASM to Testnet**:
+   ```bash
+   stellar contract deploy \
+     --wasm target/wasm32/release/payment_tracker.wasm \
+     --source deployer \
+     --network testnet
+   ```
+3. Copy the contract address printed in the output and update `VITE_CONTRACT_ID` in your `.env`.
 
 ---
 
-## Deployment Info
+## 🔒 Error Handling Matrix
 
-- **Deployed contract address:** `CBFG55XRLD2V4UMPUL2HOLPVCFHZQ7QOQSUCRCHY5ACHE6OO775IBTPH`
-- **Sample transaction hash (contract call):** `de3727add3e4789ccd7713cc1af3e1d5135f91e906cc955c3c6aaabfac264c16`
-  - Verify at: `https://stellar.expert/explorer/testnet/tx/de3727add3e4789ccd7713cc1af3e1d5135f91e906cc955c3c6aaabfac264c16`
+We proactively check and classify three core Web3 failure modes:
 
----
-
-## Screenshots
-
-### Wallet options (StellarPay)
-
-![Wallet options](/screenshots/wallet-options.png)
-
-### Multi-address payment tracker
-
-![Multi-address payment tracker](/screenshots/payment-tracker.png)
-
-### Live on-chain payment history
-
-![Live on-chain payment history](/screenshots/payment-history.png)
+| Error Type | Visual Indicator | Cause |
+|---|---|---|
+| `WalletNotFoundError` | Outlined alert box | No compatible extension active in the browser |
+| `UserRejectedError` | Outline warning block | User rejected the signing request in Freighter/xBull |
+| `InsufficientBalanceError` | Monospace error highlight | Proactive balance checks or Horizon's `op_underfunded` status |
 
 ---
 
-## Author
+## 🌐 Deployment Details
 
-**Anubhav**
+- **Deployed Contract ID**: `CBFG55XRLD2V4UMPUL2HOLPVCFHZQ7QOQSUCRCHY5ACHE6OO775IBTPH`
+- **Audit interaction hash**: `de3727add3e4789ccd7713cc1af3e1d5135f91e906cc955c3c6aaabfac264c16`
 
-Built for the **Stellar Journey to Mastery — Yellow Belt** challenge.
+---
+
+## 📸 Presentation
+
+- **Author**: Anubhav
+- **Belt Achievement**: Level 3 Orange Belt
