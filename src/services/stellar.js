@@ -49,7 +49,7 @@ export async function getBalances(publicKey) {
           code: "XLM",
           balance: b.balance,
           asset_type: b.asset_type,
-          contractId: "CAS3J7GYCCKCRSS7Z3G3DYSUG3DHLBI2CDIGEO7Z4SHE6G46DQTU6R66", // Native SAC on testnet
+          contractId: "CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC", // Native SAC on testnet
         };
       }
       return {

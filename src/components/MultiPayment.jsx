@@ -17,7 +17,7 @@ function MultiPayment() {
   
   // Custom Level 3 States
   const [routingMethod, setRoutingMethod] = useState("direct"); // "direct" | "classic"
-  const [availableTokens, setAvailableTokens] = useState([{ code: "XLM", contractId: "CAS3J7GYCCKCRSS7Z3G3DYSUG3DHLBI2CDIGEO7Z4SHE6G46DQTU6R66", balance: "0" }]);
+  const [availableTokens, setAvailableTokens] = useState([{ code: "XLM", contractId: "CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC", balance: "0" }]);
   const [selectedTokenIndex, setSelectedTokenIndex] = useState(0);
   const [customTokenContract, setCustomTokenContract] = useState("");
   const [contacts, setContacts] = useState([]);
